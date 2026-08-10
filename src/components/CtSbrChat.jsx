@@ -6,7 +6,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import useCtSbrWebSocket from "../hooks/useCtSbrWebSocket";
+import { validateWorkflowInput } from "../utils/workflowValidation";
 import CtSbrProgress from "./CtSbrProgress";
 
 const CtSbrChat = () => {
@@ -21,6 +23,8 @@ const CtSbrChat = () => {
     waitingForResponse,
     sendAnswer,
     uploadDocument,
+    expertMessage,
+    showExpertButton,
   } = useCtSbrWebSocket();
 
   const chatContainerRef = useRef(null);
@@ -31,9 +35,23 @@ const CtSbrChat = () => {
   const questionType = currentQuestion?.question_type;
 
   const submitText = () => {
-    if (!input.trim()) return;
+    const value = input.trim();
 
-    sendAnswer(input);
+    if (!value) {
+      toast.error("Please enter a value.");
+      return;
+    }
+
+    if (currentQuestion?.question_id) {
+      const error = validateWorkflowInput(currentQuestion.question_id, value);
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+    }
+
+    sendAnswer(value);
     setInput("");
   };
 
@@ -179,8 +197,28 @@ const CtSbrChat = () => {
                   )}
 
                   {failed && (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-center text-red-700 font-medium">
-                      {reason || "You are not eligible to proceed."}
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+                      <div className="text-center">
+                        <div className="font-semibold text-red-700">
+                          {reason || "You are not eligible to proceed."}
+                        </div>
+
+                        {expertMessage && (
+                          <p className="mt-3 text-sm text-red-600">
+                            {expertMessage}
+                          </p>
+                        )}
+
+                        {showExpertButton && (
+                          <button
+                            type="button"
+                            className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+                          >
+                            <MessageCircleMore size={18} />
+                            Talk to an expert
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

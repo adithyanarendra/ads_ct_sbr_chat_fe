@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 
@@ -36,6 +37,7 @@ function App() {
           }
         />
       </Routes>
+      <Toaster position="top-center" richColors closeButton expand={false} />
     </BrowserRouter>
   );
 }

@@ -16,6 +16,8 @@ const useCtSbrWebSocket = () => {
   const [phase, setPhase] = useState("phase_1");
   const [sessionId, setSessionId] = useState(null);
   const [waitingForResponse, setWaitingForResponse] = useState(false);
+  const [expertMessage, setExpertMessage] = useState(null);
+  const [showExpertButton, setShowExpertButton] = useState(false);
 
   const connect = useCallback(() => {
     if (socketRef.current) return;
@@ -43,6 +45,8 @@ const useCtSbrWebSocket = () => {
         if (data.failed) {
           setFailed(true);
           setReason(data.reason);
+          setExpertMessage(data.expert_message);
+          setShowExpertButton(data.show_expert_button);
         }
         return;
       }
@@ -112,6 +116,8 @@ const useCtSbrWebSocket = () => {
     waitingForResponse,
     sendAnswer,
     uploadDocument,
+    expertMessage,
+    showExpertButton,
   };
 };
 
