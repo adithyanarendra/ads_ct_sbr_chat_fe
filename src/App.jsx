@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import PaymentFailed from "./pages/PaymentFailed";
 import PaymentSuccessful from "./pages/PaymentSuccessful";
+import Payments from "./pages/Payments";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
