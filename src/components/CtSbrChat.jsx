@@ -6,12 +6,14 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useCtSbrWebSocket from "../hooks/useCtSbrWebSocket";
 import { validateWorkflowInput } from "../utils/workflowValidation";
 import CtSbrProgress from "./CtSbrProgress";
 
 const CtSbrChat = () => {
+  const navigate = useNavigate();
   const {
     connected,
     completed,
@@ -25,6 +27,7 @@ const CtSbrChat = () => {
     uploadDocument,
     expertMessage,
     showExpertButton,
+    paymentRequired,
   } = useCtSbrWebSocket();
 
   const chatContainerRef = useRef(null);
@@ -81,6 +84,12 @@ const CtSbrChat = () => {
         chatContainerRef.current.scrollHeight;
     }
   }, [messages, waitingForResponse, completed, failed]);
+
+  useEffect(() => {
+    if (paymentRequired) {
+      navigate("/payments", { replace: true });
+    }
+  }, [paymentRequired, navigate]);
 
   return (
     <div className="mx-auto max-w-7xl">
