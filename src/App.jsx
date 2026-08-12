@@ -2,6 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import PaymentFailed from "./pages/PaymentFailed";
+import PaymentSuccessful from "./pages/PaymentSuccessful";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -36,7 +38,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Payment initiation page */}
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute>
+              <Payments />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* MamoPay return routes */}
+        <Route path="/payments/success" element={<PaymentSuccessful />} />
+
+        <Route path="/payments/failed" element={<PaymentFailed />} />
       </Routes>
+
       <Toaster position="top-center" richColors closeButton expand={false} />
     </BrowserRouter>
   );

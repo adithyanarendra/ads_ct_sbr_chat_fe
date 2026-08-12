@@ -18,6 +18,9 @@ const useCtSbrWebSocket = () => {
   const [waitingForResponse, setWaitingForResponse] = useState(false);
   const [expertMessage, setExpertMessage] = useState(null);
   const [showExpertButton, setShowExpertButton] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [paymentId, setPaymentId] = useState(null);
+  const [paymentUrl, setPaymentUrl] = useState(null);
 
   const connect = useCallback(() => {
     if (socketRef.current) return;
@@ -38,6 +41,25 @@ const useCtSbrWebSocket = () => {
 
       if (data.session_id) setSessionId(data.session_id);
       if (data.phase) setPhase(data.phase);
+
+      if (data.payment_required) {
+        setPaymentRequired(true);
+        setPaymentId(String(data.payment_id));
+        setPaymentUrl(data.payment_url);
+
+        /*
+         * Store payment information for this browser tab.
+         */
+        sessionStorage.setItem("ct_sbr_payment_id", String(data.payment_id));
+
+        sessionStorage.setItem("ct_sbr_payment_url", data.payment_url);
+
+        if (data.session_id) {
+          sessionStorage.setItem("ct_sbr_session_id", data.session_id);
+        }
+
+        return;
+      }
 
       if (data.completed) {
         setCompleted(true);
@@ -118,6 +140,9 @@ const useCtSbrWebSocket = () => {
     uploadDocument,
     expertMessage,
     showExpertButton,
+    paymentRequired,
+    paymentId,
+    paymentUrl,
   };
 };
 
