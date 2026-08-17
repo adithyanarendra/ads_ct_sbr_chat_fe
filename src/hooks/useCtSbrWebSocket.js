@@ -106,9 +106,7 @@ const useCtSbrWebSocket = () => {
         sender: "user",
         text:
           displayText ||
-          (answer === "__skip__"
-            ? "Skipped - talk to an expert"
-            : String(answer)),
+          (answer === "__skip__" ? "Skipped" : String(answer)),
       },
     ]);
   };

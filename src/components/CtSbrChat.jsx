@@ -34,6 +34,8 @@ const CtSbrChat = () => {
 
   const [input, setInput] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [requestingCallback, setRequestingCallback] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState(null);
 
   const questionType = currentQuestion?.question_type;
 
@@ -66,16 +68,56 @@ const CtSbrChat = () => {
     setUploading(true);
 
     try {
-      const { url, file_name } = await uploadDocument(
+      const { url, file_name, report_url, report_summary } = await uploadDocument(
         file,
         currentQuestion.question_id,
       );
 
       sendAnswer(url, file_name);
+
+      if (report_url) {
+        setGeneratedReport({
+          url: report_url,
+          summary: report_summary,
+        });
+
+        const link = document.createElement("a");
+        link.href = report_url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.download = "Profit and Loss Report.xlsx";
+        link.click();
+
+        toast.success(
+          report_summary
+            ? `P&L report generated. Net profit before tax: AED ${Number(
+                report_summary.net_profit_before_tax || 0,
+              ).toLocaleString()}`
+            : "P&L report generated.",
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+          "Upload failed. Please upload a valid Excel workbook.",
+      );
     } finally {
       setUploading(false);
       e.target.value = "";
     }
+  };
+
+  const handleExpertCallback = async () => {
+    if (requestingCallback) return;
+
+    setRequestingCallback(true);
+
+    window.setTimeout(() => {
+      toast.success(
+        "Callback request received. Our expert will contact you soon.",
+      );
+      setRequestingCallback(false);
+    }, 300);
   };
 
   useEffect(() => {
@@ -95,7 +137,13 @@ const CtSbrChat = () => {
     <div className="mx-auto max-w-7xl">
       <div className="flex flex-col lg:flex-row-reverse items-start gap-8">
         <div className="w-full lg:w-72 lg:sticky lg:top-1/2 lg:-translate-y-1/2 order-1">
-          <CtSbrProgress phase={phase} completed={completed} failed={failed} />
+          <CtSbrProgress
+            phase={phase}
+            completed={completed}
+            failed={failed}
+            onExpertClick={() => handleExpertCallback()}
+            disabled={requestingCallback}
+          />
         </div>
 
         <div className="flex-1 w-full order-2">
@@ -197,6 +245,41 @@ const CtSbrChat = () => {
                     </div>
                   )}
 
+                  {generatedReport && (
+                    <div className="flex justify-start">
+                      <div className="max-w-full">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                          ADS Assistant
+                        </div>
+
+                        <div className="rounded-2xl rounded-tl-md border border-green-200 bg-green-50 px-5 py-4 text-[15px] leading-7 text-green-800">
+                          <div className="font-semibold">
+                            Profit & Loss report generated.
+                          </div>
+
+                          {generatedReport.summary && (
+                            <div className="mt-1 text-sm">
+                              Net profit before tax: AED{" "}
+                              {Number(
+                                generatedReport.summary.net_profit_before_tax || 0,
+                              ).toLocaleString()}
+                            </div>
+                          )}
+
+                          <a
+                            href={generatedReport.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download="Profit and Loss Report.xlsx"
+                            className="mt-3 inline-flex rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
+                          >
+                            Download P&L report
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {completed && !failed && (
                     <div className="rounded-2xl border border-green-200 bg-green-50 p-5 text-center text-green-700 font-medium">
                       {phase === "phase_2"
@@ -221,10 +304,14 @@ const CtSbrChat = () => {
                         {showExpertButton && (
                           <button
                             type="button"
+                            onClick={() => handleExpertCallback()}
+                            disabled={requestingCallback}
                             className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                           >
                             <MessageCircleMore size={18} />
-                            Talk to an expert
+                            {requestingCallback
+                              ? "Requesting..."
+                              : "Talk to an expert"}
                           </button>
                         )}
                       </div>
@@ -257,10 +344,12 @@ const CtSbrChat = () => {
 
                       <button
                         type="button"
+                        onClick={() => handleExpertCallback()}
+                        disabled={requestingCallback}
                         className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                       >
                         <MessageCircleMore size={18} />
-                        Not sure? Talk to us
+                        {requestingCallback ? "Requesting..." : "Not sure? Talk to us"}
                       </button>
                     </div>
                   )}
@@ -282,10 +371,14 @@ const CtSbrChat = () => {
                       <div className="border-t border-gray-200 pt-4">
                         <button
                           type="button"
+                          onClick={() => handleExpertCallback()}
+                          disabled={requestingCallback}
                           className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                         >
                           <MessageCircleMore size={18} />
-                          Not sure? Talk to us
+                          {requestingCallback
+                            ? "Requesting..."
+                            : "Not sure? Talk to us"}
                         </button>
                       </div>
                     </div>
@@ -298,17 +391,18 @@ const CtSbrChat = () => {
 
                         <div className="text-center">
                           <div className="font-medium text-gray-700">
-                            Upload document
+                            Upload Excel file
                           </div>
 
                           <div className="mt-1 text-sm text-gray-500">
-                            PDF, PNG or JPG
+                            Excel workbook with Sales Register and Expense Register sheets
                           </div>
                         </div>
 
                         <input
                           hidden
                           type="file"
+                          accept=".xlsx,.xls"
                           onChange={handleFile}
                           disabled={uploading}
                         />
@@ -332,10 +426,14 @@ const CtSbrChat = () => {
 
                         <button
                           type="button"
+                          onClick={() => handleExpertCallback()}
+                          disabled={requestingCallback}
                           className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                         >
                           <MessageCircleMore size={18} />
-                          Not sure? Talk to us
+                          {requestingCallback
+                            ? "Requesting..."
+                            : "Not sure? Talk to us"}
                         </button>
                       </div>
                     </div>
@@ -345,10 +443,12 @@ const CtSbrChat = () => {
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
                       <button
                         type="button"
+                        onClick={() => handleExpertCallback()}
+                        disabled={requestingCallback}
                         className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                       >
                         <MessageCircleMore size={18} />
-                        Not sure?
+                        {requestingCallback ? "Requesting..." : "Not sure?"}
                       </button>
 
                       <input
