@@ -35,7 +35,6 @@ const CtSbrChat = () => {
   const [input, setInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [requestingCallback, setRequestingCallback] = useState(false);
-  const [generatedReport, setGeneratedReport] = useState(null);
 
   const questionType = currentQuestion?.question_type;
 
@@ -76,17 +75,11 @@ const CtSbrChat = () => {
       sendAnswer(url, file_name);
 
       if (report_url) {
-        setGeneratedReport({
-          url: report_url,
-          summary: report_summary,
-        });
-
-        const link = document.createElement("a");
-        link.href = report_url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.download = "Profit and Loss Report.xlsx";
-        link.click();
+        sessionStorage.setItem("ct_sbr_report_url", report_url);
+        sessionStorage.setItem(
+          "ct_sbr_report_summary",
+          JSON.stringify(report_summary || {}),
+        );
 
         toast.success(
           report_summary
@@ -129,7 +122,7 @@ const CtSbrChat = () => {
 
   useEffect(() => {
     if (paymentRequired) {
-      navigate("/payments", { replace: true });
+      navigate("/payments/success?demo=1", { replace: true });
     }
   }, [paymentRequired, navigate]);
 
@@ -240,41 +233,6 @@ const CtSbrChat = () => {
                               }}
                             />
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {generatedReport && (
-                    <div className="flex justify-start">
-                      <div className="max-w-full">
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          ADS Assistant
-                        </div>
-
-                        <div className="rounded-2xl rounded-tl-md border border-green-200 bg-green-50 px-5 py-4 text-[15px] leading-7 text-green-800">
-                          <div className="font-semibold">
-                            Profit & Loss report generated.
-                          </div>
-
-                          {generatedReport.summary && (
-                            <div className="mt-1 text-sm">
-                              Net profit before tax: AED{" "}
-                              {Number(
-                                generatedReport.summary.net_profit_before_tax || 0,
-                              ).toLocaleString()}
-                            </div>
-                          )}
-
-                          <a
-                            href={generatedReport.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download="Profit and Loss Report.xlsx"
-                            className="mt-3 inline-flex rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
-                          >
-                            Download P&L report
-                          </a>
                         </div>
                       </div>
                     </div>

@@ -5,11 +5,34 @@ import api from "../api/api";
 const PaymentSuccessful = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "1";
 
   const [status, setStatus] = useState("checking");
   const [error, setError] = useState(null);
+  const [reportUrl, setReportUrl] = useState(null);
+  const [reportSummary, setReportSummary] = useState(null);
 
   useEffect(() => {
+    const storedReportUrl = sessionStorage.getItem("ct_sbr_report_url");
+    const storedReportSummary = sessionStorage.getItem("ct_sbr_report_summary");
+
+    if (storedReportUrl) {
+      setReportUrl(storedReportUrl);
+    }
+
+    if (storedReportSummary) {
+      try {
+        setReportSummary(JSON.parse(storedReportSummary));
+      } catch {
+        setReportSummary(null);
+      }
+    }
+
+    if (searchParams.get("demo") === "1") {
+      setStatus("success");
+      return;
+    }
+
     const paymentId = searchParams.get("payment_id");
 
     const storedPaymentId = sessionStorage.getItem("ct_sbr_payment_id");
@@ -154,12 +177,13 @@ const PaymentSuccessful = () => {
           </div>
 
           <h1 className="mt-5 text-2xl font-bold text-gray-900">
-            Payment Successful
+            {isDemoMode ? "Instruction Video" : "Payment Successful"}
           </h1>
 
           <p className="mt-3 text-gray-600">
-            Your payment has been verified successfully. Follow the video below
-            before continuing your filing.
+            {isDemoMode
+              ? "Follow the video below before continuing your filing."
+              : "Your payment has been verified successfully. Follow the video below before continuing your filing."}
           </p>
         </div>
 
@@ -167,6 +191,31 @@ const PaymentSuccessful = () => {
           <source src="/InstructionVideo.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
+
+        {reportUrl && (
+          <div className="mt-8 rounded-2xl border border-green-200 bg-green-50 p-5">
+            <h2 className="text-lg font-semibold text-green-900">
+              Profit & Loss Report
+            </h2>
+
+            {reportSummary && (
+              <p className="mt-2 text-sm text-green-800">
+                Net profit before tax: AED{" "}
+                {Number(reportSummary.net_profit_before_tax || 0).toLocaleString()}
+              </p>
+            )}
+
+            <a
+              href={reportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Profit and Loss Report.xlsx"
+              className="mt-4 inline-flex rounded-xl bg-green-700 px-5 py-3 font-medium text-white hover:bg-green-800"
+            >
+              Download P&L Report
+            </a>
+          </div>
+        )}
 
         <button
           type="button"
