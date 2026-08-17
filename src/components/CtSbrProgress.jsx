@@ -5,7 +5,7 @@ const PHASES = [
   { id: "phase_2", label: "Document Collection" },
 ];
 
-const CtSbrProgress = ({ phase, completed, failed }) => {
+const CtSbrProgress = ({ phase, completed, failed, onExpertClick, disabled }) => {
   const currentIndex = PHASES.findIndex((p) => p.id === phase);
 
   return (
@@ -50,10 +50,12 @@ const CtSbrProgress = ({ phase, completed, failed }) => {
       <div className="mt-6 pt-6 border-t border-gray-200">
         <button
           type="button"
+          onClick={onExpertClick}
+          disabled={disabled}
           className="w-full flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 py-3 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
         >
           <MessageCircleMore size={18} />
-          Talk to an Expert
+          {disabled ? "Requesting..." : "Talk to an Expert"}
         </button>
       </div>
     </div>
