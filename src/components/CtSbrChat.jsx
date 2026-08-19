@@ -8,8 +8,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { makeLeadHot } from "../api/bitrixService";
 import useCtSbrWebSocket from "../hooks/useCtSbrWebSocket";
 import { validateWorkflowInput } from "../utils/workflowValidation";
+import CallbackModal from "./CallbackModal";
 import CtSbrProgress from "./CtSbrProgress";
 
 const CtSbrChat = () => {
@@ -35,6 +37,7 @@ const CtSbrChat = () => {
   const [input, setInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [requestingCallback, setRequestingCallback] = useState(false);
+  const [showCallbackModal, setShowCallbackModal] = useState(false);
 
   const questionType = currentQuestion?.question_type;
 
@@ -67,10 +70,8 @@ const CtSbrChat = () => {
     setUploading(true);
 
     try {
-      const { url, file_name, report_url, report_summary } = await uploadDocument(
-        file,
-        currentQuestion.question_id,
-      );
+      const { url, file_name, report_url, report_summary } =
+        await uploadDocument(file, currentQuestion.question_id);
 
       sendAnswer(url, file_name);
 
@@ -100,17 +101,87 @@ const CtSbrChat = () => {
     }
   };
 
-  const handleExpertCallback = async () => {
+  const handleExpertCallback = () => {
     if (requestingCallback) return;
+
+    const storedUser = localStorage.getItem("whatsapp_user");
+
+    if (!storedUser) {
+      toast.error("Unable to identify your account. Please log in again.");
+      return;
+    }
+
+    let user;
+
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      toast.error(
+        "Unable to read your account information. Please log in again.",
+      );
+      return;
+    }
+
+    const bitrixLeadId = user?.bitrix_lead_id;
+
+    if (!bitrixLeadId) {
+      toast.error(
+        "We couldn't find your lead record. Please try logging in again.",
+      );
+      return;
+    }
+
+    setShowCallbackModal(true);
+  };
+
+  const handleCallbackSubmit = async (callbackDate, callbackTime) => {
+    if (requestingCallback) return;
+
+    const storedUser = localStorage.getItem("whatsapp_user");
+
+    if (!storedUser) {
+      toast.error("Unable to identify your account. Please log in again.");
+      return;
+    }
+
+    let user;
+
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      toast.error(
+        "Unable to read your account information. Please log in again.",
+      );
+      return;
+    }
+
+    const bitrixLeadId = user?.bitrix_lead_id;
+
+    if (!bitrixLeadId) {
+      toast.error(
+        "We couldn't find your lead record. Please try logging in again.",
+      );
+      return;
+    }
 
     setRequestingCallback(true);
 
-    window.setTimeout(() => {
+    try {
+      await makeLeadHot(bitrixLeadId, callbackDate, callbackTime);
+
+      setShowCallbackModal(false);
+
       toast.success(
-        "Callback request received. Our expert will contact you soon.",
+        "Your request has been sent. Our expert will contact you soon.",
       );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.detail ||
+          "Failed to request an expert callback. Please try again.",
+      );
+    } finally {
       setRequestingCallback(false);
-    }, 300);
+    }
   };
 
   useEffect(() => {
@@ -307,7 +378,9 @@ const CtSbrChat = () => {
                         className="flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
                       >
                         <MessageCircleMore size={18} />
-                        {requestingCallback ? "Requesting..." : "Not sure? Talk to us"}
+                        {requestingCallback
+                          ? "Requesting..."
+                          : "Not sure? Talk to us"}
                       </button>
                     </div>
                   )}
@@ -353,7 +426,8 @@ const CtSbrChat = () => {
                           </div>
 
                           <div className="mt-1 text-sm text-gray-500">
-                            Excel workbook with Sales Register and Expense Register sheets
+                            Excel workbook with Sales Register and Expense
+                            Register sheets
                           </div>
                         </div>
 
@@ -436,6 +510,12 @@ const CtSbrChat = () => {
           </div>
         </div>
       </div>
+      <CallbackModal
+        isOpen={showCallbackModal}
+        onClose={() => setShowCallbackModal(false)}
+        onSubmit={handleCallbackSubmit}
+        submitting={requestingCallback}
+      />
     </div>
   );
 };

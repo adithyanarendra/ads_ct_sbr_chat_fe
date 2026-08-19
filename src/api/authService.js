@@ -1,8 +1,9 @@
 import api from "./api";
 
-export const sendOtp = async (phoneNumber) => {
+export const sendOtp = async (phoneNumber, name) => {
   const { data } = await api.post("/whatsapp-auth/send-otp", {
     phone_number: phoneNumber,
+    name: name,
   });
 
   return data;
@@ -23,4 +24,12 @@ export const verifyOtp = async (phoneNumber, otp) => {
 export const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("whatsapp_user");
+};
+
+export const checkPhone = async (phoneNumber) => {
+  const { data } = await api.post("/whatsapp-auth/check-phone", {
+    phone_number: phoneNumber,
+  });
+
+  return data;
 };
