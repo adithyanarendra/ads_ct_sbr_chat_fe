@@ -193,7 +193,7 @@ const CtSbrChat = () => {
 
   useEffect(() => {
     if (paymentRequired) {
-      navigate("/payments/success?demo=1", { replace: true });
+      navigate("/payments", { replace: true });
     }
   }, [paymentRequired, navigate]);
 
